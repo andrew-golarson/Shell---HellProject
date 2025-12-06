@@ -9,8 +9,9 @@ int main() {
     std::cout << "$ ";
     std::string command{};
     std::getline(std::cin, command);
-
-    if(command != ""){
+    if(command == "exit"){
+        return 0;
+    }else{
       std::cerr << command << ": command not found" << '\n';
     }
   }

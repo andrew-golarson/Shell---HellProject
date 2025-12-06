@@ -15,7 +15,7 @@ int main() {
       if(find(builtin.begin(), builtin.end(), typedCommand) != builtin.end()){
         std::cout << typedCommand << " is a shell builtin" << '\n';
       }else{
-        std::cerr << typedCommand << ": command not found" << '\n';
+        std::cerr << typedCommand << ": not found" << '\n';
       }
     }else if(command.substr(0, 4) == "echo"){
       std::cout << command.substr(5, command.length() - 5) << '\n'; 

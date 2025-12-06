@@ -41,7 +41,7 @@ int main() {
             for (const auto& dirEntry : std::filesystem::directory_iterator(curr_dir)){
                 std::filesystem::path curr_file = dirEntry.path();
                 if(curr_file.filename() == typed_command){
-                  std::cout << typed_command << " is " << curr_file << '\n';
+                  std::cout << typed_command << " is " << curr_file.string() << '\n';
                   continue;
                 }
             }

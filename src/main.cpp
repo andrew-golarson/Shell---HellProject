@@ -22,6 +22,7 @@ int main() {
     std::string command{};
     std::getline(std::cin, command);
     if(command.substr(0, 4) == "type"){
+      bool found_file = false;
       std::string typed_command = command.substr(5, command.length() - 5);
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
         std::cout << typed_command << " is a shell builtin" << '\n';
@@ -42,13 +43,17 @@ int main() {
                 std::filesystem::path curr_file = dirEntry.path();
                 if(curr_file.filename() == typed_command){
                   std::cout << typed_command << " is " << curr_file.string() << '\n';
-                  break;
+                  found_file = true;
                 }
+                if(found_file) break;
             }
+            if(found_file) break;
           }catch(std::filesystem::__cxx11::filesystem_error err){}
         }
       }
-      std::cerr << typed_command << ": not found" << '\n';
+      if(!found_file){
+        std::cerr << typed_command << ": not found" << '\n';
+      }
        
     }else if(command.substr(0, 4) == "echo"){
       std::cout << command.substr(5, command.length() - 5) << '\n'; 

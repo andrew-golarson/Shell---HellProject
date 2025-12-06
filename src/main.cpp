@@ -42,8 +42,12 @@ int main() {
             for (const auto& dirEntry : std::filesystem::directory_iterator(curr_dir)){
                 std::filesystem::path curr_file = dirEntry.path();
                 if(curr_file.filename() == typed_command){
-                  std::cout << typed_command << " is " << curr_file.string() << '\n';
-                  found_file = true;
+                  std::filesystem::perms permissions = std::filesystem::status(curr_file).permissions();
+                  bool is_exec = (permissions & (std::filesystem::perms::owner_exec)) != std::filesystem::perms::none;
+                  if(is_exec){
+                    std::cout << typed_command << " is " << curr_file.string() << '\n';
+                    found_file = true;
+                  }
                 }
                 if(found_file) break;
             }

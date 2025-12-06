@@ -5,14 +5,14 @@ int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+  while(true){
+    std::cout << "$ ";
+    std::string command{};
+    std::getline(std::cin, command);
 
-  std::cout << "$ ";
-  std::string command{};
-  std::getline(std::cin, command);
-
-  if(command != ""){
-    std::cerr << command << ": command not found";
+    if(command != ""){
+      std::cerr << command << ": command not found" << '\r\n';
+    }
   }
-
 
 }

@@ -11,7 +11,7 @@ int main() {
     std::getline(std::cin, command);
 
     if(command != ""){
-      std::cerr << command << ": command not found" << '\r\n';
+      std::cerr << command << ": command not found" << '\n';
     }
   }
 

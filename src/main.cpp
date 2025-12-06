@@ -42,7 +42,7 @@ int main() {
                 std::filesystem::path curr_file = dirEntry.path();
                 if(curr_file.filename() == typed_command){
                   std::cout << typed_command << " is " << curr_file.string() << '\n';
-                  continue;
+                  break;
                 }
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}

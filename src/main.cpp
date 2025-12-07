@@ -197,8 +197,11 @@ int main() {
       std::cout << command.substr(5) << '\n'; 
       continue;
 
-    }else if(command == "exit"){
+    }else if(command_name == "exit"){
       return 0;
+
+    }else if(command_name == "pwd"){
+      std::cout << std::filesystem::current_path() << '\n';
 
     }else{
       

@@ -212,7 +212,7 @@ int main() {
           const char* home_dir = std::getenv("USERPROFILE");
           std::filesystem::current_path(home_dir);
         #else
-          const char* home_dir = getpwuid(getuid())->pw_dir;
+          const char* home_dir = std::getenv("HOME");
           std::filesystem::current_path(home_dir);
         #endif
       }else{

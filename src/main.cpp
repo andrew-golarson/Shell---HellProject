@@ -110,7 +110,7 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
             }
             continue; 
         }
-        if (c == ' ' && !in_quotes) {
+        if (c == ' ' && !inside_quotes) {
             arguments.push_back(part_command);
             part_command = "";
         } 

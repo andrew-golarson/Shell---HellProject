@@ -129,6 +129,7 @@ void executeCommand(const std::vector<std::string>& arguments){
     for(const auto& argument : arguments){
       char_arguments.push_back(const_cast<char*>(argument.c_str()));
     }
+    char_arguments.push_back(nullptr);
     pid_t p = fork();
     
     if(p == 0){

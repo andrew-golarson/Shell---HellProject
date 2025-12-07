@@ -208,7 +208,6 @@ int main() {
       ss >> cd_path;
       if(cd_path == "~"){
           const char* home_dir = std::getenv("USERPROFILE");
-          std::cout << home_dir;
           std::filesystem::current_path(home_dir);
       }else{
         try{

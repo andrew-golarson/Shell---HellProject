@@ -5,23 +5,12 @@
 #include <sstream>
 #include <algorithm>
 
+std::vector<std::filesystem::path> pathDirectories();
+
 #ifdef _WIN32
 // WINDOWS SPECIFIC
 #include <windows.h>
 constexpr char PATH_SEPARATOR = ';';
-
-std::vector<std::filesystem::path> pathDirectories() {
-    // Putting the $PATH/%PATH% paths into a vector
-    const char* path_env = std::getenv("PATH");
-    std::string path_str(path_env);
-    std::string temp_split;
-    std::vector<std::filesystem::path> path_dirs;
-    std::stringstream ss(path_str);
-    while (std::getline(ss, temp_split, PATH_SEPARATOR)){
-      path_dirs.push_back(temp_split);
-    }
-    return path_dirs;
-}
 
 std::filesystem::path findExecutable(const std::string& command) {
     auto path_dirs = pathDirectories();
@@ -146,6 +135,19 @@ void executeCommand(const std::vector<std::string>& arguments){
 }
 
 #endif
+
+std::vector<std::filesystem::path> pathDirectories() {
+    // Putting the $PATH/%PATH% paths into a vector
+    const char* path_env = std::getenv("PATH");
+    std::string path_str(path_env);
+    std::string temp_split;
+    std::vector<std::filesystem::path> path_dirs;
+    std::stringstream ss(path_str);
+    while (std::getline(ss, temp_split, PATH_SEPARATOR)){
+      path_dirs.push_back(temp_split);
+    }
+    return path_dirs;
+}
 
 
 

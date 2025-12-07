@@ -207,8 +207,13 @@ int main() {
       std::filesystem::path cd_path;
       ss >> cd_path;
       if(cd_path == "~"){
+        #ifdef _WIN32
           const char* home_dir = std::getenv("USERPROFILE");
           std::filesystem::current_path(home_dir);
+        #else
+          const char* home_dir = getpwuid(getuid())->pw_dir;
+          std::filesystem::current_path(home_dir);
+        #endif
       }else{
         try{
           std::filesystem::current_path(cd_path);

@@ -164,7 +164,7 @@ std::vector<std::filesystem::path> pathDirectories() {
 
 
 int main() {
-  const std::vector<std::string> builtin{"echo", "type", "exit", "pwd"};
+  const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd"};
   while(true){
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
@@ -202,6 +202,15 @@ int main() {
 
     }else if(command_name == "pwd"){
       std::cout << std::filesystem::current_path().string() << '\n';
+
+    }else if(command_name == "cd"){
+      std::filesystem::path cd_path;
+      ss >> cd_path;
+      try{
+        std::filesystem::current_path(cd_path);
+      }catch(std::filesystem::filesystem_error err){
+        std::cerr << "cd: " << cd_path << ": No such file or directory";
+      }
 
     }else{
       

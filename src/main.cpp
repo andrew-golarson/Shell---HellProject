@@ -4,13 +4,12 @@
 #include <filesystem>
 #include <sstream>
 #include <algorithm>
-#include <Windows.h>
 
 #ifdef _WIN32
+// WINDOWS SPECIFIC
+#include <windows.h>
 constexpr char PATH_SEPARATOR = ';';
-#else
-constexpr char PATH_SEPARATOR = ':';
-#endif
+
 std::vector<std::filesystem::path> pathDirectories() {
     // Putting the $PATH/%PATH% paths into a vector
     const char* path_env = std::getenv("PATH");
@@ -57,7 +56,7 @@ void executeCommand(const std::string& whole_command) {
 
     if (!CreateProcess(
         NULL,                           // No module name (use command line)
-        &command_mutable[0],                // Command line
+        &command_mutable[0],            // Command line
         NULL,                           // Process handle not inheritable
         NULL,                           // Thread handle not inheritable
         FALSE,                          // Set handle inheritance to FALSE
@@ -71,13 +70,86 @@ void executeCommand(const std::string& whole_command) {
         return;
     }
 
-    // Wait until child process exits.
+    // Wait until child process exits
     WaitForSingleObject(pi.hProcess, INFINITE);
 
-    // Close process and thread handles. 
+    // Close process and thread handles
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 }
+
+#else
+// LINUX SPECIFIC
+constexpr char PATH_SEPARATOR = ':';
+#include <unistd.h>
+#include <sys/wait.h>
+std::filesystem::path findExecutable(const std::string& whole_command) {
+    if (whole_command.find('/') != std::string::npos) {
+        if (access(whole_command.c_str(), X_OK) == 0) return whole_command;
+        return {};
+    }
+
+    auto path_dirs = pathDirectories();
+    for (const auto& dir : path_dirs) {
+        std::filesystem::path full_path = dir / whole_command;
+            if (access(full_path.c_str(), X_OK) == 0) {
+                std::filesystem::path curr_file = full_path.filename();
+                std::filesystem::perms permissions = std::filesystem::status(curr_file).permissions();
+                  bool is_exec = (permissions & (std::filesystem::perms::owner_exec)) != std::filesystem::perms::none;
+                  if(is_exec){
+                    return full_path;
+                  }
+            }
+    }
+    return {};
+  }
+  std::vector<std::string> splitCommand(const std::string& whole_command){
+  if(whole_command.empty()){
+    return {};
+  }
+  std::string part_command;
+  std::vector<std::string> arguments;
+  bool inside_quotes = false;
+  for(char c : whole_command){
+      if(((c != ' ' || c != '"' || c != '\'') && (!inside_quotes)) || inside_quotes){
+        part_command += c;
+      }else if(c == ' ' && !inside_quotes){
+        arguments.push_back(part_command);
+        part_command = "";
+      }
+      else if(c == '"' || c=='\''){
+        if(!inside_quotes){
+          inside_quotes = true;
+        }else{
+          arguments.push_back(part_command);
+          break;
+        }
+      }
+  } 
+  return arguments;
+}
+void executeCommand(const std::vector<std::string>& arguments){
+    std::vector<char*> char_arguments;
+    for(const auto& argument : arguments){
+      char_arguments.push_back(const_cast<char*>(argument.c_str()));
+    }
+    pid_t p = fork();
+    
+    if(p == 0){
+      execv(char_arguments[0], char_arguments.data());
+    }else if(p<0){
+      std::cerr << "Fork fail" << '\n';
+    }else{
+      int status;
+      waitpid(p, &status, 0);
+    }
+}
+
+#endif
+
+
+
+
 
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit"};
@@ -117,7 +189,8 @@ int main() {
       return 0;
 
     }else{
-          try{ 
+      #ifdef _WIN32
+        try{ 
             std::filesystem::path executable = findExecutable(command_name);
             if (executable != "") {
                 executeCommand(command);
@@ -125,6 +198,16 @@ int main() {
                 std::cerr << command_name << ": command not found" << '\n';
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
+      #else
+        try{ 
+            std::filesystem::path executable = findExecutable(command_name);
+            if (executable != "") {
+                executeCommand(splitCommand(command));
+            } else {
+                std::cerr << command_name << ": command not found" << '\n';
+          }
+        }catch(std::filesystem::__cxx11::filesystem_error err){}
+      #endif
     }
   }
 }

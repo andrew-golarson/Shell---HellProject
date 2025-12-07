@@ -206,10 +206,16 @@ int main() {
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
       ss >> cd_path;
-      try{
-        std::filesystem::current_path(cd_path);
-      }catch(std::filesystem::filesystem_error err){
-        std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
+      if(cd_path == "~"){
+          const char* home_dir = std::getenv("USERPROFILE");
+          std::cout << home_dir;
+          std::filesystem::current_path(home_dir);
+      }else{
+        try{
+          std::filesystem::current_path(cd_path);
+        }catch(std::filesystem::filesystem_error err){
+          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
+        }
       }
 
     }else{

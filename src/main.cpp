@@ -72,6 +72,7 @@ void executeCommand(const std::string& whole_command) {
 constexpr char PATH_SEPARATOR = ':';
 #include <unistd.h>
 #include <sys/wait.h>
+#include <pwd.h>
 std::filesystem::path findExecutable(const std::string& whole_command) {
     if (whole_command.find('/') != std::string::npos) {
         if (access(whole_command.c_str(), X_OK) == 0) return whole_command;

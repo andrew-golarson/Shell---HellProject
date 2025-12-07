@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <sstream>
 #include <algorithm>
-#include <windows.h>
+#include <Windows.h>
 
 #ifdef _WIN32
 constexpr char PATH_SEPARATOR = ';';

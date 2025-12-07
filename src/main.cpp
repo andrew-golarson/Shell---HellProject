@@ -201,7 +201,7 @@ int main() {
       return 0;
 
     }else if(command_name == "pwd"){
-      std::cout << std::filesystem::current_path() << '\n';
+      std::cout << std::filesystem::current_path().string() << '\n';
 
     }else{
       

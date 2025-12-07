@@ -144,6 +144,8 @@ void executeCommand(const std::vector<std::string>& arguments){
 
 #endif
 
+// NON SYSTEM SPECIFIC FUNCTIONS
+
 std::vector<std::filesystem::path> pathDirectories() {
     // Putting the $PATH/%PATH% paths into a vector
     const char* path_env = std::getenv("PATH");
@@ -162,7 +164,7 @@ std::vector<std::filesystem::path> pathDirectories() {
 
 
 int main() {
-  const std::vector<std::string> builtin{"echo", "type", "exit"};
+  const std::vector<std::string> builtin{"echo", "type", "exit", "pwd"};
   while(true){
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
@@ -199,25 +201,19 @@ int main() {
       return 0;
 
     }else{
-      #ifdef _WIN32
+      
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
             if (executable != "") {
+              #ifdef _WIN32
                 executeCommand(command);
-            } else {
-                std::cerr << command_name << ": command not found" << '\n';
-          }
-        }catch(std::filesystem::__cxx11::filesystem_error err){}
-      #else
-        try{ 
-            std::filesystem::path executable = findExecutable(command_name);
-            if (executable != "") {
+              #else
                 executeCommand(splitCommand(command));
+              #endif
             } else {
                 std::cerr << command_name << ": command not found" << '\n';
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
-      #endif
     }
   }
 }

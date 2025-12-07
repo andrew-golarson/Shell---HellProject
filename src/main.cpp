@@ -209,7 +209,7 @@ int main() {
       try{
         std::filesystem::current_path(cd_path);
       }catch(std::filesystem::filesystem_error err){
-        std::cerr << "cd: " << cd_path.string() << ": No such file or directory";
+        std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
       }
 
     }else{

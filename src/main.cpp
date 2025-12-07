@@ -99,24 +99,31 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
   std::string part_command;
   std::vector<std::string> arguments;
   bool inside_quotes = false;
+  char quote_char = 0; // Tracks if we are in ' or "
   for(char c : whole_command){
-      if(((c != ' ' || c != '"' || c != '\'') && (!inside_quotes)) || inside_quotes){
-        part_command += c;
-      }else if(c == ' ' && !inside_quotes){
-        arguments.push_back(part_command);
-        part_command = "";
-      }
-      else if(c == '"' || c=='\''){
-        if(!inside_quotes){
-          inside_quotes = true;
-        }else{
-          arguments.push_back(part_command);
-          break;
+        if ((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)) {
+            inside_quotes = !inside_quotes;
+            if (inside_quotes) {
+                quote_char = c;
+            } else {
+                quote_char = 0;
+            }
+            continue; 
         }
-      }
+        if (c == ' ' && !in_quotes) {
+            arguments.push_back(part_command);
+            part_command = "";
+        } 
+        else {
+            part_command += c;
+        }
+    }
+    if (!part_command.empty()) {
+        arguments.push_back(part_command);
+    }
+    return arguments;
   } 
-  return arguments;
-}
+  
 void executeCommand(const std::vector<std::string>& arguments){
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
@@ -125,7 +132,7 @@ void executeCommand(const std::vector<std::string>& arguments){
     pid_t p = fork();
     
     if(p == 0){
-      execv(char_arguments[0], char_arguments.data());
+      execvp(char_arguments[0], char_arguments.data());
     }else if(p<0){
       std::cerr << "Fork fail" << '\n';
     }else{

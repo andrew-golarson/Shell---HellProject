@@ -137,7 +137,7 @@ void executeCommand(const std::vector<std::string>& arguments){
     if(p == 0){
       execvp(char_arguments[0], char_arguments.data());
     }else if(p<0){
-      std::cerr << "Fork fail" << '\n';
+      std::cerr << "Fork failed" << '\n';
     }else{
       int status;
       waitpid(p, &status, 0);

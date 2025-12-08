@@ -218,10 +218,15 @@ int main() {
       }
 
     }else if(command_name == "echo"){
+      bool erase_one_more_space = false;
       while(ss.rdbuf()->in_avail() != 0){
         std::string temp;
         ss >> temp;
-        if(temp == ">" || temp == "1>"){
+        if(temp == ">"){
+          std_to_file = true;
+          break;
+        }else if(temp == "1>"){
+          erase_one_more_space = true;
           std_to_file = true;
           break;
         }
@@ -232,7 +237,7 @@ int main() {
         std::string std_filename;
         ss >> std_filename;
         std::ofstream file(std_filename);
-        file << command.substr(5) << '\n';
+        file << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << '\n';
         file.close();
       }
 

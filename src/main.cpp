@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <sstream>
 #include <algorithm>
+#include <fstream>
 
 std::vector<std::filesystem::path> pathDirectories();
 
@@ -72,7 +73,7 @@ void executeCommand(const std::string& whole_command) {
 constexpr char PATH_SEPARATOR = ':';
 #include <unistd.h>
 #include <sys/wait.h>
-#include <pwd.h>
+
 std::filesystem::path findExecutable(const std::string& whole_command) {
     if (whole_command.find('/') != std::string::npos) {
         if (access(whole_command.c_str(), X_OK) == 0) return whole_command;
@@ -161,9 +162,6 @@ std::vector<std::filesystem::path> pathDirectories() {
 }
 
 
-
-
-
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd"};
   while(true){
@@ -176,37 +174,93 @@ int main() {
     std::stringstream ss(command);
     std::string command_name;
     ss >> command_name;
+    bool std_to_file = false;
 
     if(command_name == "type"){
       std::string typed_command;
       ss >> typed_command;
+      if(ss.rdbuf()->in_avail() != 0){
+        std::string temp;
+        ss >> temp;
+        if(temp == ">" || temp == "1>"){
+          std_to_file = true;
+        }
+      }
+      
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
-        std::cout << typed_command << " is a shell builtin" << '\n';
+        if(!std_to_file){
+          std::cout << typed_command << " is a shell builtin" << '\n';
+        }else{
+          std::string std_filename;
+          ss >> std_filename;
+          std::ofstream file(std_filename);
+          file << typed_command << " is a shell builtin" << '\n';
+          file.close();
+        }
         continue;
       }else{
           try{
             std::filesystem::path executable = findExecutable(typed_command);
             if(executable != ""){
-              std::cout << typed_command << " is " << executable.string() << '\n';
+              if(!std_to_file){
+                std::cout << typed_command << " is " << executable.string() << '\n';
+              }else{               
+                std::string std_filename;
+                ss >> std_filename;
+                std::ofstream file(std_filename);
+                file << typed_command << " is " << executable.string() << '\n';
+                file.close();
+              }
             }else{
               std::cerr << typed_command << ": not found" << '\n';
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}
       }
-      continue;
+
     }else if(command_name == "echo"){
-      std::cout << command.substr(5) << '\n'; 
-      continue;
+      while(ss.rdbuf()->in_avail() != 0){
+        std::string temp;
+        ss >> temp;
+        if(temp == ">" || temp == "1>"){
+          std_to_file = true;
+          break;
+        }
+      }
+      if(!std_to_file){
+        std::cout << command.substr(5) << '\n'; 
+      }else{
+        std::string std_filename;
+        ss >> std_filename;
+        std::ofstream file(std_filename);
+        file << command.substr(5) << '\n';
+        file.close();
+      }
 
     }else if(command_name == "exit"){
       return 0;
 
     }else if(command_name == "pwd"){
-      std::cout << std::filesystem::current_path().string() << '\n';
-
+      if(ss.rdbuf()->in_avail() != 0){
+        std::string temp;
+        ss >> temp;
+        if(temp == ">" || temp == "1>"){
+          std_to_file = true;
+        }
+      }
+      if(!std_to_file){
+        std::cout << std::filesystem::current_path().string() << '\n';
+      }else{
+        std::string std_filename;
+        ss >> std_filename;
+        std::ofstream file(std_filename);
+        file << std::filesystem::current_path().string() << '\n';
+        file.close();
+      }
+      
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
       ss >> cd_path;
+
       if(cd_path == "~"){
         #ifdef _WIN32
           const char* home_dir = std::getenv("USERPROFILE");
@@ -224,7 +278,6 @@ int main() {
       }
 
     }else{
-      
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
             if (executable != "") {

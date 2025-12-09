@@ -232,19 +232,19 @@ int main() {
       std::string temp{};
       std::string message;
       while (ss >> temp) {
-      if (temp == ">") {
-        std_to_file = true;
-        break;
-      }else if(temp == "1>"){
-        std_to_file = true;
-        erase_one_more_space = true;
-        break;
-      }else{
-        if(!message.empty()){
-          message += " ";
+        if (temp == ">") {
+          std_to_file = true;
+          break;
+        }else if(temp == "1>"){
+          std_to_file = true;
+          erase_one_more_space = true;
+          break;
+        }else{
+          if(!message.empty()){
+            message += " ";
+          }
+          message += temp;
         }
-        message += temp;
-      }
       }
       if(!std_to_file){
         std::cout << command.substr(5) << '\n'; 

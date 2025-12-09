@@ -189,14 +189,14 @@ int main() {
       
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
         if(!std_to_file){
-          std::cout << typed_command << " is a shell builtin" << '\n';
+          std::cout << typed_command << " is a shell builtin" << std::endl;
         }else{
           std::string std_filename;
           ss >> std_filename;
           std::ofstream file(std_filename);
           auto cout_buff = std::cout.rdbuf();
           std::cout.rdbuf(file.rdbuf());
-          std::cout << typed_command << " is a shell builtin" << '\n';
+          std::cout << typed_command << " is a shell builtin" << std::endl;
           file.close();
           std::cout.rdbuf(cout_buff);
         }
@@ -206,19 +206,19 @@ int main() {
             std::filesystem::path executable = findExecutable(typed_command);
             if(executable != ""){
               if(!std_to_file){
-                std::cout << typed_command << " is " << executable.string() << '\n';
+                std::cout << typed_command << " is " << executable.string() << std::endl;
               }else{               
                 std::string std_filename;
                 ss >> std_filename;
                 std::ofstream file(std_filename);
                 auto cout_buff = std::cout.rdbuf();
                 std::cout.rdbuf(file.rdbuf());
-                std::cout << typed_command << " is " << executable.string() << '\n';
+                std::cout << typed_command << " is " << executable.string() << std::endl;
                 file.close();
                 std::cout.rdbuf(cout_buff);
               }
             }else{
-              std::cerr << typed_command << ": not found" << '\n';
+              std::cerr << typed_command << ": not found" <<std::endl;
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}
       }
@@ -245,7 +245,7 @@ int main() {
         std::ofstream file(std_filename);
         auto cout_buff = std::cout.rdbuf();
         std::cout.rdbuf(file.rdbuf());
-        std::cout << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << '\n';
+        std::cout << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << std::endl;
         file.close();
         std::cout.rdbuf(cout_buff);
       }
@@ -262,14 +262,14 @@ int main() {
         }
       }
       if(!std_to_file){
-        std::cout << std::filesystem::current_path().string() << '\n';
+        std::cout << std::filesystem::current_path().string() << std::endl;
       }else{
         std::string std_filename;
         ss >> std_filename;
         std::ofstream file(std_filename);
         auto cout_buff = std::cout.rdbuf();
         std::cout.rdbuf(file.rdbuf());
-        std::cout << std::filesystem::current_path().string() << '\n';
+        std::cout << std::filesystem::current_path().string() << std::endl;
         file.close();
         std::cout.rdbuf(cout_buff);
       }
@@ -290,7 +290,7 @@ int main() {
         try{
           std::filesystem::current_path(cd_path);
         }catch(std::filesystem::filesystem_error err){
-          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
+          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << std::endl;
         }
       }
 
@@ -304,7 +304,7 @@ int main() {
                 executeCommand(splitCommand(command));
               #endif
             } else {
-                std::cerr << command_name << ": command not found" << '\n';
+                std::cerr << command_name << ": command not found" << std::endl;
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
     }

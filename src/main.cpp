@@ -126,7 +126,7 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
     return arguments;
   } 
   
-void executeCommand(const std::vector<std::string>& arguments){
+void executeCommand(const std::vector<std::string>& arguments, const std::string& output_file = ""){
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
       char_arguments.push_back(const_cast<char*>(argument.c_str()));
@@ -135,6 +135,15 @@ void executeCommand(const std::vector<std::string>& arguments){
     pid_t p = fork();
     
     if(p == 0){
+      // Handle Redirection
+        if (!output_file.empty()) {
+          int file = open(output_file.c_str(), O_WRONLY | O_CREAT);
+          if (dup2(file, STDOUT_FILENO) == -1) {
+              perror("dup2");
+              exit(1);
+          }
+          close(file);
+      }
       execvp(char_arguments[0], char_arguments.data());
     }else if(p<0){
       std::cerr << "Fork failed" << '\n';
@@ -320,15 +329,11 @@ int main() {
                 }
                 std::cout.rdbuf(cout_buff);
               #else
-                auto cout_buff = std::cout.rdbuf(); 
                 if(std_to_file){
-                  std::ofstream file(filename);
-                  std::cout.rdbuf(file.rdbuf());
-                  executeCommand(splitCommand(command));
+                  executeCommand(splitCommand(command), filename);
                 }else{
                   executeCommand(splitCommand(command));
                 }
-                std::cout.rdbuf(cout_buff);
               #endif
             } else {
                 std::cerr << command_name << ": command not found" << '\n';

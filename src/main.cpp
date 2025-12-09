@@ -8,6 +8,7 @@
 
 std::vector<std::filesystem::path> pathDirectories();
 
+
 #ifdef _WIN32
 // WINDOWS SPECIFIC
 #include <windows.h>
@@ -15,7 +16,6 @@ constexpr char PATH_SEPARATOR = ';';
 
 std::filesystem::path findExecutable(const std::string& command) {
     auto path_dirs = pathDirectories();
-
     std::vector<std::string> extensions = {"", ".exe", ".bat", ".cmd"};
 
     for (const auto& dir : path_dirs) {
@@ -294,11 +294,41 @@ int main() {
     }else{
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
+            std::string temp{};
+            std::string filename{};
+            while(ss >> temp){
+              if(temp == ">" || temp== "1>"){
+                auto it = command.rfind(">");
+                if(ss>>filename){
+                }else{
+                  std::cerr << "No filename provided";
+                }
+                command.erase(it);
+                std_to_file = true;
+                break;
+              }
+            }
             if (executable != "") {
               #ifdef _WIN32
-                executeCommand(command);
+                auto cout_buff = std::cout.rdbuf();
+                if(std_to_file){
+                  std::ofstream file(filename);
+                  std::cout.rdbuf(file.rdbuf());
+                  executeCommand(command);
+                }else{
+                  executeCommand(command);
+                }
+                std::cout.rdbuf(cout_buff);
               #else
-                executeCommand(splitCommand(command));
+                auto cout_buff = std::cout.rdbuf(); 
+                if(std_to_file){
+                  std::ofstream file(filename);
+                  std::cout.rdbuf(file.rdbuf());
+                  executeCommand(splitCommand(command));
+                }else{
+                  executeCommand(splitCommand(command));
+                }
+                std::cout.rdbuf(cout_buff);
               #endif
             } else {
                 std::cerr << command_name << ": command not found" << '\n';

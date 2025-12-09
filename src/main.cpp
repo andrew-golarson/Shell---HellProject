@@ -194,8 +194,11 @@ int main() {
           std::string std_filename;
           ss >> std_filename;
           std::ofstream file(std_filename);
-          file << typed_command << " is a shell builtin" << '\n';
+          auto cout_buff = std::cout.rdbuf();
+          std::cout.rdbuf(file.rdbuf());
+          std::cout << typed_command << " is a shell builtin" << '\n';
           file.close();
+          std::cout.rdbuf(cout_buff);
         }
         continue;
       }else{
@@ -208,8 +211,11 @@ int main() {
                 std::string std_filename;
                 ss >> std_filename;
                 std::ofstream file(std_filename);
-                file << typed_command << " is " << executable.string() << '\n';
+                auto cout_buff = std::cout.rdbuf();
+                std::cout.rdbuf(file.rdbuf());
+                std::cout << typed_command << " is " << executable.string() << '\n';
                 file.close();
+                std::cout.rdbuf(cout_buff);
               }
             }else{
               std::cerr << typed_command << ": not found" << '\n';
@@ -237,8 +243,11 @@ int main() {
         std::string std_filename;
         ss >> std_filename;
         std::ofstream file(std_filename);
-        file << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << '\n';
+        auto cout_buff = std::cout.rdbuf();
+        std::cout.rdbuf(file.rdbuf());
+        std::cout << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << '\n';
         file.close();
+        std::cout.rdbuf(cout_buff);
       }
 
     }else if(command_name == "exit"){
@@ -258,8 +267,11 @@ int main() {
         std::string std_filename;
         ss >> std_filename;
         std::ofstream file(std_filename);
-        file << std::filesystem::current_path().string() << '\n';
+        auto cout_buff = std::cout.rdbuf();
+        std::cout.rdbuf(file.rdbuf());
+        std::cout << std::filesystem::current_path().string() << '\n';
         file.close();
+        std::cout.rdbuf(cout_buff);
       }
       
     }else if(command_name == "cd"){

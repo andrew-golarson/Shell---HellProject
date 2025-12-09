@@ -189,16 +189,13 @@ int main() {
       
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
         if(!std_to_file){
-          std::cout << typed_command << " is a shell builtin" << std::endl;
+          std::cout << typed_command << " is a shell builtin" << '\n';
         }else{
           std::string std_filename;
           ss >> std_filename;
           std::ofstream file(std_filename);
-          auto cout_buff = std::cout.rdbuf();
-          std::cout.rdbuf(file.rdbuf());
-          std::cout << typed_command << " is a shell builtin" << std::endl;
+          file << typed_command << " is a shell builtin" << '\n';
           file.close();
-          std::cout.rdbuf(cout_buff);
         }
         continue;
       }else{
@@ -206,48 +203,51 @@ int main() {
             std::filesystem::path executable = findExecutable(typed_command);
             if(executable != ""){
               if(!std_to_file){
-                std::cout << typed_command << " is " << executable.string() << std::endl;
+                std::cout << typed_command << " is " << executable.string() << '\n';
               }else{               
                 std::string std_filename;
                 ss >> std_filename;
                 std::ofstream file(std_filename);
-                auto cout_buff = std::cout.rdbuf();
-                std::cout.rdbuf(file.rdbuf());
-                std::cout << typed_command << " is " << executable.string() << std::endl;
+                file << typed_command << " is " << executable.string() << '\n';
                 file.close();
-                std::cout.rdbuf(cout_buff);
               }
             }else{
-              std::cerr << typed_command << ": not found" <<std::endl;
+              std::cerr << typed_command << ": not found" << '\n';
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}
       }
 
     }else if(command_name == "echo"){
       bool erase_one_more_space = false;
-      while(ss.rdbuf()->in_avail() != 0){
-        std::string temp;
-        ss >> temp;
-        if(temp == ">"){
-          std_to_file = true;
-          break;
-        }else if(temp == "1>"){
-          erase_one_more_space = true;
-          std_to_file = true;
-          break;
+      std::string temp{};
+      std::string message;
+      while (ss >> temp) {
+      if (temp == ">") {
+        std_to_file = true;
+        break;
+      }else if(temp == "1>"){
+        std_to_file = true;
+        erase_one_more_space = true;
+        break;
+      }else{
+        if(!message.empty()){
+          message += " ";
         }
+        message += temp;
+      }
       }
       if(!std_to_file){
         std::cout << command.substr(5) << '\n'; 
       }else{
         std::string std_filename;
-        ss >> std_filename;
+        if(ss >> std_filename){
+        }else{
+          std::cerr << "No filename provided";
+          continue;
+        }
         std::ofstream file(std_filename);
-        auto cout_buff = std::cout.rdbuf();
-        std::cout.rdbuf(file.rdbuf());
-        std::cout << command.substr(5, command.size() - (std_filename.size() + 5 + ((erase_one_more_space)? 4 : 3))) << std::endl;
+        file << message << '\n';
         file.close();
-        std::cout.rdbuf(cout_buff);
       }
 
     }else if(command_name == "exit"){
@@ -262,16 +262,13 @@ int main() {
         }
       }
       if(!std_to_file){
-        std::cout << std::filesystem::current_path().string() << std::endl;
+        std::cout << std::filesystem::current_path().string() << '\n';
       }else{
         std::string std_filename;
         ss >> std_filename;
         std::ofstream file(std_filename);
-        auto cout_buff = std::cout.rdbuf();
-        std::cout.rdbuf(file.rdbuf());
-        std::cout << std::filesystem::current_path().string() << std::endl;
+        file << std::filesystem::current_path().string() << '\n';
         file.close();
-        std::cout.rdbuf(cout_buff);
       }
       
     }else if(command_name == "cd"){
@@ -290,7 +287,7 @@ int main() {
         try{
           std::filesystem::current_path(cd_path);
         }catch(std::filesystem::filesystem_error err){
-          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << std::endl;
+          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
         }
       }
 
@@ -304,7 +301,7 @@ int main() {
                 executeCommand(splitCommand(command));
               #endif
             } else {
-                std::cerr << command_name << ": command not found" << std::endl;
+                std::cerr << command_name << ": command not found" << '\n';
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
     }

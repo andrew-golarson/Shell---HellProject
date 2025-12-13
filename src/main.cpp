@@ -124,7 +124,7 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
     return {};
   }
   
-void executeCommand(const std::vector<std::string>& arguments, const std::string& output_file = ""){
+void executeCommand(const std::vector<std::string>& arguments, bool err_redir, bool std_redir, const std::string& output_file = ""){
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
       char_arguments.push_back(const_cast<char*>(argument.c_str()));
@@ -134,13 +134,21 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
     
     if(p == 0){
       // Handle Redirection
-        if (!output_file.empty()) {
-          int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644);
-          if (dup2(file, STDOUT_FILENO) == -1) {
-              perror("dup2");
-              exit(1);
-          }
-          close(file);
+      if(!output_file.empty() && std_redir) {
+        int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644);
+        if (dup2(file, STDOUT_FILENO) == -1) {
+            perror("dup2");
+            exit(1);
+        }
+        close(file);
+      }
+      if((!output_file.empty() && err_redir)){
+        int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644);
+        if (dup2(file, STDERR_FILENO) == -1) {
+            perror("dup2");
+            exit(1);
+        }
+        close(file);
       }
       execvp(char_arguments[0], char_arguments.data());
       exit(1);
@@ -307,8 +315,8 @@ int main() {
         }
       }
       if(err_to_file){
-        err_file.open(err_filename);
         orig_err_buff = std::cerr.rdbuf();
+        err_file.open(err_filename);
         std::cerr.rdbuf(err_file.rdbuf());
       }
       if(cd_path == "~"){
@@ -335,13 +343,12 @@ int main() {
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
             
-            std::string std_filename{};
-            std::string err_filename{};
+            std::string filename{};
             auto it = std::find_if(parsed_args.begin(), parsed_args.end(), [](const std::string& s){ return s == ">" || s == "1>"; });
             if(it != parsed_args.end()){
                  std_to_file = true;
                  if(it + 1 != parsed_args.end()){
-                     std_filename = *(it + 1);
+                     filename = *(it + 1);
                  }else{
                   std::cerr << "No filename provided for stdout";
                  }
@@ -350,26 +357,31 @@ int main() {
             if(it_err != parsed_args.end()){
                  err_to_file = true;
                  if(it + 1 != parsed_args.end()){
-                     err_filename = *(it + 1);
+                     filename = *(it + 1);
                  }else{
                   std::cerr << "No filename provided for stderr";
                  }
             }
             if(err_to_file){
-              err_file.open(err_filename);
-              orig_err_buff = std::cerr.rdbuf();
-              std::cerr.rdbuf(err_file.rdbuf());
+                orig_err_buff = std::cerr.rdbuf();
+                err_file.open(filename);
+                std::cerr.rdbuf(err_file.rdbuf());
             }
             if (executable != "") {
               #ifdef _WIN32
                 auto cout_buff = std::cout.rdbuf();
                 if(std_to_file){
-                  std::ofstream std_file(std_filename);
+                  std::ofstream std_file(filename);
                   std::cout.rdbuf(std_file.rdbuf());
                   executeCommand(command);
+                  std_file.close();
+                }else if(err_to_file){         
+                  executeCommand(command);
+                  err_file.close();
                 }else{
                   executeCommand(command);
                 }
+                std::cerr.rdbuf(orig_err_buff);
                 std::cout.rdbuf(cout_buff);
               #else
                 std::vector<std::string> exec_args;
@@ -379,15 +391,7 @@ int main() {
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
-
-                if(std_to_file){
-                  executeCommand(exec_args, std_filename);
-                }else if(err_to_file){
-                  executeCommand(exec_args);
-                  std::cerr.rdbuf(orig_err_buff);
-                  err_file.close();
-                }else{
-                  executeCommand(exec_args);
+                  executeCommand(exec_args, err_to_file,  std_to_file, filename);
                 }
               #endif
             } else {

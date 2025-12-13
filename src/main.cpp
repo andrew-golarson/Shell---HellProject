@@ -382,17 +382,22 @@ int main() {
               #else
                 std::vector<std::string> exec_args;
                 for(int i=0; i<parsed_args.size(); ++i){
-                    if(parsed_args[i] == ">" || parsed_args[i] == "1  >" || parsed_args[i] == "2>") {
-                        break;
+                    if(parsed_args[i] == ">" || parsed_args[i] == "1>" || parsed_args[i] == "2>") {
+                        if(i+2 < parsed_args.size()){
+                          i += 2;
+                        }else{
+                          break;
+                        }
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
-                executeCommand(exec_args, std_file, err_file);
+                executeCommand(exec_args, to_string(std_file), to_string(err_file));
               #endif
             }else{
               if(err_to_file){
                 std::ofstream file(std_file);
                 file << command_name << ": command not found" << '\n';
+                file.close();
               }else{
                 std::cerr << command_name << ": command not found" << '\n';
               }

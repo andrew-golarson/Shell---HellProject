@@ -8,6 +8,41 @@
 
 std::vector<std::filesystem::path> pathDirectories();
 
+std::vector<std::string> splitCommand(const std::string& whole_command){
+    if(whole_command.empty()){
+        return {};
+    }
+    std::string part_command;
+    std::vector<std::string> arguments;
+    bool inside_quotes = false;
+    char quote_char = 0; // Tracks if we are in ' or "
+    
+    for(char c : whole_command){
+        if ((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)) {
+            inside_quotes = !inside_quotes;
+            if (inside_quotes) {
+                quote_char = c;
+            } else {
+                quote_char = 0;
+            }
+            continue; 
+        }
+        if (c == ' ' && !inside_quotes) {
+            if(!part_command.empty()){
+                arguments.push_back(part_command);
+                part_command = "";
+            }
+        } 
+        else {
+            part_command += c;
+        }
+    }
+    if (!part_command.empty()) {
+        arguments.push_back(part_command);
+    }
+    return arguments;
+} 
+// ------------------------------------------------------------------------
 
 #ifdef _WIN32
 // WINDOWS SPECIFIC
@@ -22,12 +57,8 @@ std::filesystem::path findExecutable(const std::string& command) {
         for (const auto& ext : extensions) {
             std::filesystem::path full_path = dir / (command + ext);
             if (std::filesystem::exists(full_path) && std::filesystem::is_regular_file(full_path)) {
-                std::filesystem::path curr_file = full_path.filename();
-                std::filesystem::perms permissions = std::filesystem::status(curr_file).permissions();
-                  bool is_exec = (permissions & (std::filesystem::perms::owner_exec)) != std::filesystem::perms::none;
-                  if(is_exec){
-                    return full_path;
-                  }
+                // Windows permission checks are complex, simplified here to existence
+                return full_path;
             }
         }
     }
@@ -45,25 +76,22 @@ void executeCommand(const std::string& whole_command) {
     std::string command_mutable = whole_command;
 
     if (!CreateProcess(
-        NULL,                           // No module name (use command line)
-        &command_mutable[0],            // Command line
-        NULL,                           // Process handle not inheritable
-        NULL,                           // Thread handle not inheritable
-        FALSE,                          // Set handle inheritance to FALSE
-        0,                              // No creation flags
-        NULL,                           // Use parent's environment block
-        NULL,                           // Use parent's starting directory 
-        &si,                            // Pointer to STARTUPINFO structure
-        &pi)                            // Pointer to PROCESS_INFORMATION structure
+        NULL,                   // No module name (use command line)
+        &command_mutable[0],    // Command line
+        NULL,                   // Process handle not inheritable
+        NULL,                   // Thread handle not inheritable
+        FALSE,                  // Set handle inheritance to FALSE
+        0,                      // No creation flags
+        NULL,                   // Use parent's environment block
+        NULL,                   // Use parent's starting directory 
+        &si,                    // Pointer to STARTUPINFO structure
+        &pi)                    // Pointer to PROCESS_INFORMATION structure
     ) {
         std::cerr << "Process Failed: " << GetLastError() << '\n';
         return;
     }
 
-    // Wait until child process exits
     WaitForSingleObject(pi.hProcess, INFINITE);
-
-    // Close process and thread handles
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 }
@@ -95,37 +123,6 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
     }
     return {};
   }
-  std::vector<std::string> splitCommand(const std::string& whole_command){
-  if(whole_command.empty()){
-    return {};
-  }
-  std::string part_command;
-  std::vector<std::string> arguments;
-  bool inside_quotes = false;
-  char quote_char = 0; // Tracks if we are in ' or "
-  for(char c : whole_command){
-        if ((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)) {
-            inside_quotes = !inside_quotes;
-            if (inside_quotes) {
-                quote_char = c;
-            } else {
-                quote_char = 0;
-            }
-            continue; 
-        }
-        if (c == ' ' && !inside_quotes) {
-            arguments.push_back(part_command);
-            part_command = "";
-        } 
-        else {
-            part_command += c;
-        }
-    }
-    if (!part_command.empty()) {
-        arguments.push_back(part_command);
-    }
-    return arguments;
-  } 
   
 void executeCommand(const std::vector<std::string>& arguments, const std::string& output_file = ""){
     std::vector<char*> char_arguments;
@@ -138,7 +135,7 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
     if(p == 0){
       // Handle Redirection
         if (!output_file.empty()) {
-          int file = open(output_file.c_str(), O_WRONLY | O_CREAT);
+          int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644); // Added permissions mode for O_CREAT
           if (dup2(file, STDOUT_FILENO) == -1) {
               perror("dup2");
               exit(1);
@@ -146,6 +143,7 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
           close(file);
       }
       execvp(char_arguments[0], char_arguments.data());
+      exit(1);
     }else if(p<0){
       std::cerr << "Fork failed" << '\n';
     }else{
@@ -159,9 +157,8 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
 // NON SYSTEM SPECIFIC FUNCTIONS
 
 std::vector<std::filesystem::path> pathDirectories() {
-    // Putting the $PATH/%PATH% paths into a vector
     const char* path_env = std::getenv("PATH");
-    std::string path_str(path_env);
+    std::string path_str(path_env ? path_env : ""); // Safety check if PATH is null
     std::string temp_split;
     std::vector<std::filesystem::path> path_dirs;
     std::stringstream ss(path_str);
@@ -181,10 +178,20 @@ int main() {
 
     std::string command{};
     std::getline(std::cin, command);
-    std::stringstream ss(command);
-    std::string command_name;
-    ss >> command_name;
+    if(command.empty()) continue;
+
+    std::vector<std::string> parsed_args = splitCommand(command);
+    if(parsed_args.empty()){
+      std::cerr << "No arguments" << '\n'; 
+      continue;
+    }
+
+    std::string command_name = parsed_args[0];
     bool std_to_file = false;
+    
+    std::stringstream ss(command);
+    std::string com_name; 
+    ss >> com_name;
 
     if(command_name == "type"){
       std::string typed_command;
@@ -214,7 +221,7 @@ int main() {
             if(executable != ""){
               if(!std_to_file){
                 std::cout << typed_command << " is " << executable.string() << '\n';
-              }else{               
+              }else{              
                 std::string std_filename;
                 ss >> std_filename;
                 std::ofstream file(std_filename);
@@ -228,32 +235,29 @@ int main() {
       }
 
     }else if(command_name == "echo"){
-      bool erase_one_more_space = false;
-      std::string temp{};
       std::string message;
-      while (ss >> temp) {
-        if (temp == ">") {
-          std_to_file = true;
-          break;
-        }else if(temp == "1>"){
-          std_to_file = true;
-          erase_one_more_space = true;
-          break;
-        }else{
-          if(!message.empty()){
-            message += " ";
+      std::string std_filename;
+
+      for(int i = 1; i < parsed_args.size(); ++i) {
+          if(parsed_args[i] == ">" || parsed_args[i] == "1>") {
+              std_to_file = true;
+              if(i + 1 < parsed_args.size()) {
+                  std_filename = parsed_args[i+1];
+                  break;
+              } else {
+                  std::cerr << "No filename provided";
+              }
+          } else {
+              if(!message.empty()) message += " ";
+              message += parsed_args[i];
           }
-          message += temp;
-        }
       }
+
       if(!std_to_file){
-        std::cout << command.substr(5) << '\n'; 
+        std::cout << message << '\n'; 
       }else{
-        std::string std_filename;
-        if(ss >> std_filename){
-        }else{
-          std::cerr << "No filename provided";
-          continue;
+        if(std_filename.empty()){
+            continue;
         }
         std::ofstream file(std_filename);
         file << message << '\n';
@@ -283,15 +287,16 @@ int main() {
       
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
-      ss >> cd_path;
+      
+      if(parsed_args.size() > 1) cd_path = parsed_args[1];
 
-      if(cd_path == "~"){
+      if(cd_path == "~" || cd_path.empty()){
         #ifdef _WIN32
           const char* home_dir = std::getenv("USERPROFILE");
-          std::filesystem::current_path(home_dir);
+          if(home_dir) std::filesystem::current_path(home_dir);
         #else
           const char* home_dir = std::getenv("HOME");
-          std::filesystem::current_path(home_dir);
+          if(home_dir) std::filesystem::current_path(home_dir);
         #endif
       }else{
         try{
@@ -304,20 +309,18 @@ int main() {
     }else{
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
-            std::string temp{};
+            
             std::string filename{};
-            while(ss >> temp){
-              if(temp == ">" || temp== "1>"){
-                auto it = command.rfind(">");
-                if(ss>>filename){
-                }else{
+            auto it = std::find_if(parsed_args.begin(), parsed_args.end(), [](const std::string& s){ return s == ">" || s == "1>"; });
+            if(it != parsed_args.end()){
+                 std_to_file = true;
+                 if(it + 1 != parsed_args.end()){
+                     filename = *(it + 1);
+                 }else{
                   std::cerr << "No filename provided";
-                }
-                command.erase(it);
-                std_to_file = true;
-                break;
-              }
+                 }
             }
+
             if (executable != "") {
               #ifdef _WIN32
                 auto cout_buff = std::cout.rdbuf();
@@ -330,10 +333,18 @@ int main() {
                 }
                 std::cout.rdbuf(cout_buff);
               #else
+                std::vector<std::string> exec_args;
+                for(int i=0; i<parsed_args.size(); ++i){
+                    if(parsed_args[i] == ">" || parsed_args[i] == "1>") {
+                        break;
+                    }
+                    exec_args.push_back(parsed_args[i]);
+                }
+
                 if(std_to_file){
-                  executeCommand(splitCommand(command), filename);
+                  executeCommand(exec_args, filename);
                 }else{
-                  executeCommand(splitCommand(command));
+                  executeCommand(exec_args);
                 }
               #endif
             } else {

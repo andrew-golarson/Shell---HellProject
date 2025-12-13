@@ -392,7 +392,6 @@ int main() {
                     exec_args.push_back(parsed_args[i]);
                 }
                   executeCommand(exec_args, err_to_file,  std_to_file, filename);
-                }
               #endif
             } else {
               std::cerr << command_name << ": command not found" << '\n';

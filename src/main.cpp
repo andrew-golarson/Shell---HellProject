@@ -362,13 +362,13 @@ int main() {
                   std::cerr << "No filename provided for stderr";
                  }
             }
-            if(err_to_file){
+            if (executable != "") {
+              #ifdef _WIN32
+              if(err_to_file){
                 orig_err_buff = std::cerr.rdbuf();
                 err_file.open(filename);
                 std::cerr.rdbuf(err_file.rdbuf());
-            }
-            if (executable != "") {
-              #ifdef _WIN32
+              }
                 auto cout_buff = std::cout.rdbuf();
                 if(std_to_file){
                   std::ofstream std_file(filename);
@@ -391,9 +391,14 @@ int main() {
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
-                  executeCommand(exec_args, err_to_file,  std_to_file, filename);
+                executeCommand(exec_args, err_to_file,  std_to_file, filename);
               #endif
             } else {
+              if(err_to_file){
+                orig_err_buff = std::cerr.rdbuf();
+                err_file.open(filename);
+                std::cerr.rdbuf(err_file.rdbuf());
+              }
               std::cerr << command_name << ": command not found" << '\n';
               if(err_to_file){
                 std::cerr.rdbuf(orig_err_buff);

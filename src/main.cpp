@@ -391,7 +391,7 @@ int main() {
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
-                executeCommand(exec_args, to_string(std_file), to_string(err_file));
+                executeCommand(exec_args, std::to_string(std_file), std::to_string(err_file));
               #endif
             }else{
               if(err_to_file){

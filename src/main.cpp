@@ -142,7 +142,6 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
           }
           close(file);
       }
-          close(file);
       execvp(char_arguments[0], char_arguments.data());
       exit(1);
     }else if(p<0){

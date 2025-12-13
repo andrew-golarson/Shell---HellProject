@@ -369,8 +369,11 @@ int main() {
                   std::cout.rdbuf(file.rdbuf());
                   executeCommand(command);
                   file.close();
-                }else if(err_to_file){         
+                }else if(err_to_file){
+                  std::ofstream file(err_file);
+                  std::cerr.rdbuf(file.rdbuf());         
                   executeCommand(command);
+                  file.close();
                 }else{
                   executeCommand(command);
                 }
@@ -387,7 +390,12 @@ int main() {
                 executeCommand(exec_args, std_file, err_file);
               #endif
             }else{
-              std::cerr << command_name << ": command not found" << '\n';
+              if(err_to_file){
+                std::ofstream file(std_file);
+                file << command_name << ": command not found" << '\n';
+              }else{
+                std::cerr << command_name << ": command not found" << '\n';
+              }
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
     }

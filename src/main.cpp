@@ -372,8 +372,8 @@ int main() {
             auto it_err = std::find_if(parsed_args.begin(), parsed_args.end(), [](const std::string& s){ return s == "2>"; });
             if(it_err != parsed_args.end()){
                  err_to_file = true;
-                 if(it + 1 != parsed_args.end()){
-                     err_file = *(it + 1);
+                 if(it_err + 1 != parsed_args.end()){
+                     err_file = *(it_err + 1);
                  }else{
                   std::cerr << "No filename provided for stderr";
                  }

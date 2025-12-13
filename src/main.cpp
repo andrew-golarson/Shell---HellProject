@@ -386,7 +386,7 @@ int main() {
               #else
                 std::vector<std::string> exec_args;
                 for(int i=0; i<parsed_args.size(); ++i){
-                    if(parsed_args[i] == ">" || parsed_args[i] == "1>") {
+                    if(parsed_args[i] == ">" || parsed_args[i] == "1>" || parsed_args[i] == "2>") {
                         break;
                     }
                     exec_args.push_back(parsed_args[i]);

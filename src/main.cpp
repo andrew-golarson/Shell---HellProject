@@ -8,42 +8,6 @@
 
 std::vector<std::filesystem::path> pathDirectories();
 
-std::vector<std::string> splitCommand(const std::string& whole_command){
-    if(whole_command.empty()){
-        return {};
-    }
-    std::string part_command;
-    std::vector<std::string> arguments;
-    bool inside_quotes = false;
-    char quote_char = 0; // Tracks if we are in ' or "
-    
-    for(char c : whole_command){
-        if ((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)) {
-            inside_quotes = !inside_quotes;
-            if (inside_quotes) {
-                quote_char = c;
-            } else {
-                quote_char = 0;
-            }
-            continue; 
-        }
-        if (c == ' ' && !inside_quotes) {
-            if(!part_command.empty()){
-                arguments.push_back(part_command);
-                part_command = "";
-            }
-        } 
-        else {
-            part_command += c;
-        }
-    }
-    if (!part_command.empty()) {
-        arguments.push_back(part_command);
-    }
-    return arguments;
-} 
-// ------------------------------------------------------------------------
-
 #ifdef _WIN32
 // WINDOWS SPECIFIC
 #include <windows.h>
@@ -176,6 +140,41 @@ std::vector<std::filesystem::path> pathDirectories() {
     return path_dirs;
 }
 
+std::vector<std::string> splitCommand(const std::string& whole_command){
+    if(whole_command.empty()){
+        return {};
+    }
+    std::string part_command;
+    std::vector<std::string> arguments;
+    bool inside_quotes = false;
+    char quote_char = 0; // Tracks if we are in ' or "
+    
+    for(char c : whole_command){
+      if((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)){
+        inside_quotes = !inside_quotes;
+        if(inside_quotes) {
+            quote_char = c;
+        }else{
+            quote_char = 0;
+        }
+        continue; 
+      }
+      if(c == ' ' && !inside_quotes){
+        if(!part_command.empty()){
+          arguments.push_back(part_command);
+          part_command = "";
+        }
+      } 
+      else{
+        part_command += c;
+      }
+  }
+  if(!part_command.empty()) {
+    arguments.push_back(part_command);
+  }
+  return arguments;
+} 
+
 
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd"};
@@ -256,10 +255,10 @@ int main() {
               if(i + 1 < parsed_args.size()) {
                   std_filename = parsed_args[i+1];
                   break;
-              } else {
+              }else{
                   std::cerr << "No filename provided";
               }
-          }else {
+          }else{
               if(!message.empty()) message += " ";
               message += parsed_args[i];
           }
@@ -393,7 +392,7 @@ int main() {
                 }
                 executeCommand(exec_args, err_to_file,  std_to_file, filename);
               #endif
-            } else {
+            }else{
               if(err_to_file){
                 orig_err_buff = std::cerr.rdbuf();
                 err_file.open(filename);

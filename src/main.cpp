@@ -279,7 +279,7 @@ int main() {
             }
           }else if(parsed_args[i] == "2>"){
             err_to_file = true;
-            (i + 1 < parsed_args.size()) {
+            if(i + 1 < parsed_args.size()) {
                 err_filename = parsed_args[i+1];
                 break;
             }else{

@@ -266,16 +266,25 @@ int main() {
     }else if(command_name == "echo"){
       std::string message;
       std::string std_filename;
+      std::string err_filename;
 
       for(int i = 1; i < parsed_args.size(); ++i) {
           if(parsed_args[i] == ">" || parsed_args[i] == "1>") {
-              std_to_file = true;
-              if(i + 1 < parsed_args.size()) {
-                  std_filename = parsed_args[i+1];
-                  break;
-              }else{
-                  std::cerr << "No filename provided";
-              }
+            std_to_file = true;
+            if(i + 1 < parsed_args.size()) {
+                std_filename = parsed_args[i+1];
+                break;
+            }else{
+                std::cerr << "No filename provided";
+            }
+          }else if(parsed_args[i] == "2>"){
+            err_to_file = true;
+            (i + 1 < parsed_args.size()) {
+                err_filename = parsed_args[i+1];
+                break;
+            }else{
+                std::cerr << "No filename provided";
+            }
           }else{
               if(!message.empty()) message += " ";
               message += parsed_args[i];

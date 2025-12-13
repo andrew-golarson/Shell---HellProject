@@ -88,7 +88,7 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
     return {};
   }
   
-void executeCommand(const std::vector<std::string>& arguments, const std::string& std_file, const std::string& err_file){
+void executeCommand(const std::vector<std::string>& arguments, const std::filesystem::path& std_file, const std::filesystem::path& err_file){
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
       char_arguments.push_back(const_cast<char*>(argument.c_str()));
@@ -391,7 +391,7 @@ int main() {
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
-                executeCommand(exec_args, std::to_string(std_file), std::to_string(err_file));
+                executeCommand(exec_args, std_file, err_file);
               #endif
             }else{
               if(err_to_file){

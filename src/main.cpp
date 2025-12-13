@@ -135,13 +135,14 @@ void executeCommand(const std::vector<std::string>& arguments, const std::string
     if(p == 0){
       // Handle Redirection
         if (!output_file.empty()) {
-          int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644); // Added permissions mode for O_CREAT
+          int file = open(output_file.c_str(), O_WRONLY | O_CREAT, 0644);
           if (dup2(file, STDOUT_FILENO) == -1) {
               perror("dup2");
               exit(1);
           }
           close(file);
       }
+          close(file);
       execvp(char_arguments[0], char_arguments.data());
       exit(1);
     }else if(p<0){
@@ -188,7 +189,11 @@ int main() {
 
     std::string command_name = parsed_args[0];
     bool std_to_file = false;
-    
+
+    bool err_to_file = false;
+    std::streambuf* orig_err_buff = nullptr;
+    std::ofstream err_file{};
+
     std::stringstream ss(command);
     std::string com_name; 
     ss >> com_name;
@@ -247,7 +252,7 @@ int main() {
               } else {
                   std::cerr << "No filename provided";
               }
-          } else {
+          }else {
               if(!message.empty()) message += " ";
               message += parsed_args[i];
           }
@@ -287,10 +292,27 @@ int main() {
       
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
-      
-      if(parsed_args.size() > 1) cd_path = parsed_args[1];
+      std::string err_filename{};
 
-      if(cd_path == "~" || cd_path.empty()){
+      if(parsed_args.size() > 1) cd_path = parsed_args[1];
+      if(parsed_args.size() > 2){
+        for(int i = 2; i<parsed_args.size(); i++){
+          if(parsed_args[i] == "2>"){
+            err_to_file = true;
+            if(i + 1 < parsed_args.size()){
+              err_filename = parsed_args[i+1];
+            }else{
+              std::cerr << "No filename provided for stderr" << '\n';
+            }
+          }
+        }
+      }
+      if(err_to_file){
+        err_file.open(err_filename);
+        orig_err_buff = std::cerr.rdbuf();
+        std::cerr.rdbuf(err_file.rdbuf());
+      }
+      if(cd_path == "~"){
         #ifdef _WIN32
           const char* home_dir = std::getenv("USERPROFILE");
           if(home_dir) std::filesystem::current_path(home_dir);
@@ -303,6 +325,10 @@ int main() {
           std::filesystem::current_path(cd_path);
         }catch(std::filesystem::filesystem_error err){
           std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
+          if(err_to_file){
+            std::cerr.rdbuf(orig_err_buff);
+            err_file.close(); 
+          }
         }
       }
 
@@ -310,23 +336,37 @@ int main() {
         try{ 
             std::filesystem::path executable = findExecutable(command_name);
             
-            std::string filename{};
+            std::string std_filename{};
+            std::string err_filename{};
             auto it = std::find_if(parsed_args.begin(), parsed_args.end(), [](const std::string& s){ return s == ">" || s == "1>"; });
             if(it != parsed_args.end()){
                  std_to_file = true;
                  if(it + 1 != parsed_args.end()){
-                     filename = *(it + 1);
+                     std_filename = *(it + 1);
                  }else{
-                  std::cerr << "No filename provided";
+                  std::cerr << "No filename provided for stdout";
                  }
             }
-
+            auto it_err = std::find_if(parsed_args.begin(), parsed_args.end(), [](const std::string& s){ return s == "2>"; });
+            if(it_err != parsed_args.end()){
+                 err_to_file = true;
+                 if(it + 1 != parsed_args.end()){
+                     err_filename = *(it + 1);
+                 }else{
+                  std::cerr << "No filename provided for stderr";
+                 }
+            }
+            if(err_to_file){
+              err_file.open(err_filename);
+              orig_err_buff = std::cerr.rdbuf();
+              std::cerr.rdbuf(err_file.rdbuf());
+            }
             if (executable != "") {
               #ifdef _WIN32
                 auto cout_buff = std::cout.rdbuf();
                 if(std_to_file){
-                  std::ofstream file(filename);
-                  std::cout.rdbuf(file.rdbuf());
+                  std::ofstream std_file(std_filename);
+                  std::cout.rdbuf(std_file.rdbuf());
                   executeCommand(command);
                 }else{
                   executeCommand(command);
@@ -342,13 +382,21 @@ int main() {
                 }
 
                 if(std_to_file){
-                  executeCommand(exec_args, filename);
+                  executeCommand(exec_args, std_filename);
+                }else if(err_to_file){
+                  executeCommand(exec_args);
+                  std::cerr.rdbuf(orig_err_buff);
+                  err_file.close();
                 }else{
                   executeCommand(exec_args);
                 }
               #endif
             } else {
-                std::cerr << command_name << ": command not found" << '\n';
+              std::cerr << command_name << ": command not found" << '\n';
+              if(err_to_file){
+                std::cerr.rdbuf(orig_err_buff);
+                err_file.close(); 
+              }
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}
     }

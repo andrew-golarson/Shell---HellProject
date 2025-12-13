@@ -88,39 +88,56 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
     return {};
   }
   
-void executeCommand(const std::vector<std::string>& arguments, const std::filesystem::path& std_file, const std::filesystem::path& err_file){
+void executeCommand(const std::vector<std::string>& arguments, 
+                    const std::filesystem::path& std_file, 
+                    const std::filesystem::path& err_file) {
+    
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
-      char_arguments.push_back(const_cast<char*>(argument.c_str()));
+        char_arguments.push_back(const_cast<char*>(argument.c_str()));
     }
     char_arguments.push_back(nullptr);
+
     pid_t p = fork();
     
     if(p == 0){
-      // Handle Redirection
-      if(!std_file.empty()) {
-        int file = open(std_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (dup2(file, STDOUT_FILENO) == -1) {
-            perror("dup2");
-            exit(1);
+        // child process
+
+        if(!std_file.empty()) {
+            int file = open(std_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if(file < 0) { 
+              perror("open stdout"); 
+              exit(1); 
+            }
+            if(dup2(file, STDOUT_FILENO) == -1) { 
+              perror("dup2 stdout"); 
+              exit(1); 
+            }
+            close(file);
         }
-        close(file);
-      }
-      if((!err_file.empty())){
-        int file = open(err_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (dup2(file, STDERR_FILENO) == -1) {
-            perror("dup2");
-            exit(1);
+
+        if(!err_file.empty()){
+            int file = open(err_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if(file < 0) { 
+              perror("open stderr"); 
+              exit(1); 
+            }
+            if(dup2(file, STDERR_FILENO) == -1) { 
+              perror("dup2 stderr"); 
+              exit(1); 
+            }
+            close(file);
         }
-        close(file);
-      }
-      execvp(char_arguments[0], char_arguments.data());
-      exit(1);
-    }else if(p<0){
-      std::cerr << "Fork failed" << '\n';
-    }else{
-      int status;
-      waitpid(p, &status, 0);
+
+        execvp(char_arguments[0], char_arguments.data());
+
+        std::cerr << arguments[0] << ": execution failed" << '\n';
+        exit(1);
+    } else if(p < 0){
+        std::cerr << "Fork failed" << '\n';
+    } else {
+        int status;
+        waitpid(p, &status, 0);
     }
 }
 
@@ -130,7 +147,7 @@ void executeCommand(const std::vector<std::string>& arguments, const std::filesy
 
 std::vector<std::filesystem::path> pathDirectories() {
     const char* path_env = std::getenv("PATH");
-    std::string path_str(path_env ? path_env : ""); // Safety check if PATH is null
+    std::string path_str(path_env ? path_env : "");
     std::string temp_split;
     std::vector<std::filesystem::path> path_dirs;
     std::stringstream ss(path_str);
@@ -383,11 +400,7 @@ int main() {
                 std::vector<std::string> exec_args;
                 for(int i=0; i<parsed_args.size(); ++i){
                     if(parsed_args[i] == ">" || parsed_args[i] == "1>" || parsed_args[i] == "2>") {
-                        if(i+2 < parsed_args.size()){
-                          i += 2;
-                        }else{
                           break;
-                        }
                     }
                     exec_args.push_back(parsed_args[i]);
                 }
@@ -395,7 +408,7 @@ int main() {
               #endif
             }else{
               if(err_to_file){
-                std::ofstream file(std_file);
+                std::ofstream file(err_file);
                 file << command_name << ": command not found" << '\n';
                 file.close();
               }else{

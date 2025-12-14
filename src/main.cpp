@@ -91,7 +91,8 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
 void executeCommand(const std::vector<std::string>& arguments, 
                     const std::filesystem::path& std_file, 
                     const std::filesystem::path& err_file,
-                    const bool std_append) {
+                    const bool std_append,
+                    const bool err_append) {
     
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
@@ -118,7 +119,7 @@ void executeCommand(const std::vector<std::string>& arguments,
         }
 
         if(!err_file.empty()){
-            int file = open(err_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int file = open(err_file.c_str(), O_WRONLY | O_CREAT | ((err_append)? O_APPEND : O_TRUNC), 0644);
             if(file < 0) { 
               perror("open stderr"); 
               exit(1); 
@@ -213,11 +214,12 @@ int main() {
 
     bool std_to_file = false;
     bool std_append = false;
-    std::streambuf* cout_buff = nullptr;
+    std::streambuf* cout_buff = std::cout.rdbuf();
     std::filesystem::path std_file{};
 
     bool err_to_file = false;
-    std::streambuf* orig_err_buff = nullptr;
+    bool err_append = false;
+    std::streambuf* orig_err_buff = std::cerr.rdbuf();
     std::filesystem::path err_file{};
 
     std::vector<std::string> clean_args;
@@ -247,7 +249,15 @@ int main() {
             std::cerr << "No filename provided for stdout append";
           } 
           ++i; 
-          ++i;
+        }else if(parsed_args[i] == "2>>"){
+          err_to_file = true;
+          err_append = true;
+          if(i+1 < parsed_args.size()){
+            err_file = parsed_args[i+1];
+          }else{
+            std::cerr << "No filename provided for stderr append";
+          } 
+          ++i; 
         }else{
           clean_args.push_back(parsed_args[i]);
         }
@@ -303,7 +313,7 @@ int main() {
         file.close();
       }
       if(err_to_file){
-        std::ofstream file(err_file);
+        std::ofstream file(err_file, ((err_append)? std::ios::app : std::ios::trunc));
         file.close();
       }
 
@@ -322,12 +332,10 @@ int main() {
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
 
-      if(parsed_args.size() > 1) cd_path = parsed_args[1];
+      if(clean_args.size() > 1) cd_path = clean_args[1];
 
-      std::ofstream file{};
+      std::ofstream file{err_file, ((err_append)? std::ios::app : std::ios::trunc)};
       if(err_to_file){
-        orig_err_buff = std::cerr.rdbuf();
-        file = err_file;
         std::cerr.rdbuf(file.rdbuf());
       }
 
@@ -368,15 +376,13 @@ int main() {
             std::filesystem::path executable = findExecutable(command_name);
             if (executable != "") {
               #ifdef _WIN32
-                cout_buff = std::cout.rdbuf();
-                orig_err_buff = std::cerr.rdbuf();
                 if(std_to_file){
                   std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
                   std::cout.rdbuf(file.rdbuf());
                   executeCommand(command);
                   file.close();
                 }else if(err_to_file){
-                  std::ofstream file(err_file);
+                  std::ofstream file(err_file, ((err_append)? std::ios::app : std::ios::trunc));
                   std::cerr.rdbuf(file.rdbuf());         
                   executeCommand(command);
                   file.close();
@@ -386,11 +392,11 @@ int main() {
                 std::cerr.rdbuf(orig_err_buff);
                 std::cout.rdbuf(cout_buff);
               #else
-                executeCommand(clean_args, std_file, err_file, std_append);
+                executeCommand(clean_args, std_file, err_file, std_append, err_append);
               #endif
             }else{
               if(err_to_file){
-                std::ofstream file(err_file);
+                std::ofstream file(err_file, ((err_append)? std::ios::app : std::ios::trunc));
                 file << command_name << ": command not found" << '\n';
                 file.close();
               }else{

@@ -333,7 +333,19 @@ int main() {
       }
       
     }else if(command_name == "history"){
-      for(int i{}; i<history_list.size(); i++){
+      int limit{};
+      if(clean_args.size() > 1){
+        try{
+          limit = history_list.size() - std::stoi(clean_args[1]);
+          if(limit < 0){
+            limit = 0;
+            throw;
+          }
+        }catch(std::exception &err){
+          std::cerr << "Invalid limiting history input, has to be a positive integer";
+        }
+      }
+      for(int i = limit; i<history_list.size(); i++){
         std::cout << i+1 << "  " << history_list[i] << '\n';
       }
     }else if(command_name == "cd"){

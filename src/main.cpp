@@ -279,6 +279,7 @@ int main() {
       std::string message;
 
       for(int i = 1; i < clean_args.size(); ++i) {
+        if(!message.empty()) message += " ";
         message += clean_args[i];
       }
 

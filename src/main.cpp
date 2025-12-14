@@ -211,6 +211,7 @@ int main() {
     std::string command_name = parsed_args[0];
 
     bool std_to_file = false;
+    std::streambuf* cout_buff = nullptr;
     std::filesystem::path std_file{};
 
     bool err_to_file = false;
@@ -350,11 +351,12 @@ int main() {
       }
 
     }else{
-        try{ 
+        try{
             std::filesystem::path executable = findExecutable(command_name);
             if (executable != "") {
               #ifdef _WIN32
-                auto cout_buff = std::cout.rdbuf();
+                cout_buff = std::cout.rdbuf();
+                orig_err_buff = std::cerr.rdbuf();
                 if(std_to_file){
                   std::ofstream file(std_file);
                   std::cout.rdbuf(file.rdbuf());
@@ -371,7 +373,7 @@ int main() {
                 std::cerr.rdbuf(orig_err_buff);
                 std::cout.rdbuf(cout_buff);
               #else
-                executeCommand(exec_args, std_file, err_file);
+                executeCommand(clean_args, std_file, err_file);
               #endif
             }else{
               if(err_to_file){

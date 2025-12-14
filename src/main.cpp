@@ -105,7 +105,7 @@ void executeCommand(const std::vector<std::string>& arguments,
         // child process
 
         if(!std_file.empty()) {
-            int file = open(std_file.c_str(), O_WRONLY | O_CREAT | ((std_append)? O_APP : O_TRUNC), 0644);
+            int file = open(std_file.c_str(), O_WRONLY | O_CREAT | ((std_append)? O_APPEND : O_TRUNC), 0644);
             if(file < 0) { 
               perror("open stdout"); 
               exit(1); 

@@ -90,7 +90,8 @@ std::filesystem::path findExecutable(const std::string& whole_command) {
   
 void executeCommand(const std::vector<std::string>& arguments, 
                     const std::filesystem::path& std_file, 
-                    const std::filesystem::path& err_file) {
+                    const std::filesystem::path& err_file,
+                    const bool std_append) {
     
     std::vector<char*> char_arguments;
     for(const auto& argument : arguments){
@@ -104,7 +105,7 @@ void executeCommand(const std::vector<std::string>& arguments,
         // child process
 
         if(!std_file.empty()) {
-            int file = open(std_file.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int file = open(std_file.c_str(), O_WRONLY | O_CREAT | ((std_append)? O_APP : O_TRUNC), 0644);
             if(file < 0) { 
               perror("open stdout"); 
               exit(1); 
@@ -211,6 +212,7 @@ int main() {
     std::string command_name = parsed_args[0];
 
     bool std_to_file = false;
+    bool std_append = false;
     std::streambuf* cout_buff = nullptr;
     std::filesystem::path std_file{};
 
@@ -236,6 +238,16 @@ int main() {
             std::cerr << "No filename provided for stderr";
           } 
           ++i;
+        }else if(parsed_args[i] == ">>" || parsed_args[i] == "1>>"){
+          std_to_file = true;
+          std_append = true;
+          if(i+1 < parsed_args.size()){
+            std_file = parsed_args[i+1];
+          }else{
+            std::cerr << "No filename provided for stdout append";
+          } 
+          ++i; 
+          ++i;
         }else{
           clean_args.push_back(parsed_args[i]);
         }
@@ -253,7 +265,7 @@ int main() {
         if(!std_to_file){
           std::cout << typed_command << " is a shell builtin" << '\n';
         }else{
-          std::ofstream file(std_file);
+          std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
           file << typed_command << " is a shell builtin" << '\n';
           file.close();
         }
@@ -265,7 +277,7 @@ int main() {
               if(!std_to_file){
                 std::cout << typed_command << " is " << executable.string() << '\n';
               }else{              
-                std::ofstream file(std_file);
+                std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
                 file << typed_command << " is " << executable.string() << '\n';
                 file.close();
               }
@@ -286,7 +298,7 @@ int main() {
       if(!std_to_file){
         std::cout << message << '\n'; 
       }else{
-        std::ofstream file(std_file);
+        std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
         file << message << '\n';
         file.close();
       }
@@ -302,7 +314,7 @@ int main() {
       if(!std_to_file){
         std::cout << std::filesystem::current_path().string() << '\n';
       }else{
-        std::ofstream file(std_file);
+        std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
         file << std::filesystem::current_path().string() << '\n';
         file.close();
       }
@@ -359,7 +371,7 @@ int main() {
                 cout_buff = std::cout.rdbuf();
                 orig_err_buff = std::cerr.rdbuf();
                 if(std_to_file){
-                  std::ofstream file(std_file);
+                  std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
                   std::cout.rdbuf(file.rdbuf());
                   executeCommand(command);
                   file.close();
@@ -374,7 +386,7 @@ int main() {
                 std::cerr.rdbuf(orig_err_buff);
                 std::cout.rdbuf(cout_buff);
               #else
-                executeCommand(clean_args, std_file, err_file);
+                executeCommand(clean_args, std_file, err_file, std_append);
               #endif
             }else{
               if(err_to_file){

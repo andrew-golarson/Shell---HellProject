@@ -196,7 +196,8 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
 
 
 int main() {
-  const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd"};
+  const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd", "history"};
+  std::vector<std::string> history_list{};
   while(true){
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
@@ -205,6 +206,8 @@ int main() {
     std::string command{};
     std::getline(std::cin, command);
     if(command.empty()) continue;
+    history_list.push_back(command);    
+
     std::vector<std::string> parsed_args = splitCommand(command);
     if(parsed_args.empty()){
       std::cerr << "No arguments" << '\n'; 
@@ -329,6 +332,10 @@ int main() {
         file.close();
       }
       
+    }else if(command_name == "history"){
+      for(int i{}; i<history_list.size(); i++){
+        std::cout << i+1 << ". " << history_list[i] << '\n';
+      }
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
 

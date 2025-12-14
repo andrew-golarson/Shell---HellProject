@@ -334,7 +334,7 @@ int main() {
       
     }else if(command_name == "history"){
       for(int i{}; i<history_list.size(); i++){
-        std::cout << i+1 << ". " << history_list[i] << '\n';
+        std::cout << i+1 << "  " << history_list[i] << '\n';
       }
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;

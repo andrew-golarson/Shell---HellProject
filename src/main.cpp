@@ -205,9 +205,7 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
   while(true){
-
-    std::cout << "$ ";
-    char const* input_str = replxx.input("");
+    char const* input_str = replxx.input("$ ");
     
     std::string command{input_str};
     

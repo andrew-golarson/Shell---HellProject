@@ -206,8 +206,8 @@ int main() {
   
   while(true){
     std::string command{};
-    linenoise::Readline("$ ", command);
-    if(command.empty()) continue;
+    auto success = linenoise::Readline("$ ", command);
+    if(!success) break;
     linenoise::AddHistory(command.c_str());
     linenoise::SaveHistory(path);
     history_list.push_back(command);    

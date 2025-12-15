@@ -205,9 +205,12 @@ int main() {
   linenoise::SetHistoryMaxLen(100);
   
   while(true){
+    std::cout << std::unitbuf;
+    std::cerr << std::unitbuf;
     std::string command{};
     auto success = linenoise::Readline("$ ", command);
     if(!success) break;
+    
     linenoise::AddHistory(command.c_str());
     linenoise::SaveHistory(path);
     history_list.push_back(command);    

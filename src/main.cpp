@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
+#include "replxx.hxx"
 
 std::vector<std::filesystem::path> pathDirectories();
 
@@ -198,15 +199,20 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd", "history"};
   std::vector<std::string> history_list{};
+  replxx::Replxx replxx;
+  std::string history_file = "./replxx_history.txt";
+  replxx.history_load(history_file);
+  const std::string prompt = "$ ";
   while(true){
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
-    std::cout << "$ ";
-
-    std::string command{};
-    std::getline(std::cin, command);
+    char const* input_str = replxx.input(prompt);
+    
+    std::string command{input_str};
+    
     if(command.empty()) continue;
-    history_list.push_back(command);    
+    history_list.push_back(command);   
+    replxx.history_add(command); 
 
     std::vector<std::string> parsed_args = splitCommand(command);
     if(parsed_args.empty()){

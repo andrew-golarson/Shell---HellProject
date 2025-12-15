@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
+#include <cctype>
 #include "linenoise.hpp"
 
 std::vector<std::filesystem::path> pathDirectories();
@@ -167,7 +168,7 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
     std::string part_command;
     std::vector<std::string> arguments;
     bool inside_quotes = false;
-    char quote_char = 0; // Tracks if we are in ' or "
+    char quote_char = 0; 
     
     for(char c : whole_command){
       if((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)){
@@ -179,7 +180,8 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
         }
         continue; 
       }
-      if(c == ' ' && !inside_quotes){
+      
+      if(std::isspace(static_cast<unsigned char>(c)) && !inside_quotes){
         if(!part_command.empty()){
           arguments.push_back(part_command);
           part_command = "";
@@ -188,12 +190,12 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
       else{
         part_command += c;
       }
-  }
-  if(!part_command.empty()) {
-    arguments.push_back(part_command);
-  }
-  return arguments;
-} 
+    }
+    if(!part_command.empty()) {
+      arguments.push_back(part_command);
+    }
+    return arguments;
+}
 
 
 int main() {

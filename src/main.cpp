@@ -199,14 +199,15 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd", "history"};
   std::vector<std::string> history_list{};
+  const auto path = "history.txt";
+  linenoise::LoadHistory(path);
+  linenoise::SetHistoryMaxLen(100);
   while(true){
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
-    std::cout << "$ ";
-
     std::string command{};
-    std::getline(std::cin, command);
+    linenoise::Readline("$> ", command);
     if(command.empty()) continue;
+    linenoise::AddHistory(command.c_str());
+    linenoise::SaveHistory(path);
     history_list.push_back(command);    
 
     std::vector<std::string> parsed_args = splitCommand(command);

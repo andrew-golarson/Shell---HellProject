@@ -207,6 +207,7 @@ int main() {
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
     char const* input_str = replxx.input(prompt);
+    if (input_str == nullptr) break;
     
     std::string command{input_str};
     

@@ -202,12 +202,12 @@ int main() {
   replxx::Replxx replxx;
   std::string history_file = "./replxx_history.txt";
   replxx.history_load(history_file);
-  const std::string prompt = "$ ";
+  std::cout << std::unitbuf;
+  std::cerr << std::unitbuf;
   while(true){
-    std::cout << std::unitbuf;
-    std::cerr << std::unitbuf;
-    char const* input_str = replxx.input(prompt);
-    if (input_str == nullptr) break;
+
+    std::cout << "$ ";
+    char const* input_str = replxx.input("");
     
     std::string command{input_str};
     

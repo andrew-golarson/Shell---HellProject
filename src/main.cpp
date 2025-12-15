@@ -179,15 +179,15 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
         }
         continue; 
       }
-      if(c == ' ' && !inside_quotes){
+      if(std::isspace(static_cast<unsigned char>(c)) && !inside_quotes){
         if(!part_command.empty()){
-          arguments.push_back(part_command);
-          part_command = "";
+            arguments.push_back(part_command);
+            part_command = "";
         }
-      } 
-      else{
+    } 
+    else{
         part_command += c;
-      }
+    }
   }
   if(!part_command.empty()) {
     arguments.push_back(part_command);

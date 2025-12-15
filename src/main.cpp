@@ -52,7 +52,7 @@ void executeCommand(const std::string& whole_command) {
         &si,                    // Pointer to STARTUPINFO structure
         &pi)                    // Pointer to PROCESS_INFORMATION structure
     ) {
-        std::cerr << "Process Failed: " << GetLastError() << '\n';
+        std::cerr << "Process Failed: " << GetLastError() << std::endl;
         return;
     }
 
@@ -134,10 +134,10 @@ void executeCommand(const std::vector<std::string>& arguments,
 
         execvp(char_arguments[0], char_arguments.data());
 
-        std::cerr << arguments[0] << ": execution failed" << '\n';
+        std::cerr << arguments[0] << ": execution failed" << std::endl;
         exit(1);
     } else if(p < 0){
-        std::cerr << "Fork failed" << '\n';
+        std::cerr << "Fork failed" << std::endl;
     } else {
         int status;
         waitpid(p, &status, 0);
@@ -282,10 +282,10 @@ int main() {
       
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
         if(!std_to_file){
-          std::cout << typed_command << " is a shell builtin" << '\n';
+          std::cout << typed_command << " is a shell builtin" << std::endl;
         }else{
           std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-          file << typed_command << " is a shell builtin" << '\n';
+          file << typed_command << " is a shell builtin" << std::endl;
           file.close();
         }
         continue;
@@ -294,14 +294,14 @@ int main() {
             std::filesystem::path executable = findExecutable(typed_command);
             if(executable != ""){
               if(!std_to_file){
-                std::cout << typed_command << " is " << executable.string() << '\n';
+                std::cout << typed_command << " is " << executable.string() << std::endl;
               }else{              
                 std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-                file << typed_command << " is " << executable.string() << '\n';
+                file << typed_command << " is " << executable.string() << std::endl;
                 file.close();
               }
             }else{
-              std::cerr << typed_command << ": not found" << '\n';
+              std::cerr << typed_command << ": not found" << std::endl;
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}
       }
@@ -315,10 +315,10 @@ int main() {
       }
 
       if(!std_to_file){
-        std::cout << message << '\n'; 
+        std::cout << message << std::endl; 
       }else{
         std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-        file << message << '\n';
+        file << message << std::endl;
         file.close();
       }
       if(err_to_file){
@@ -331,10 +331,10 @@ int main() {
 
     }else if(command_name == "pwd"){
       if(!std_to_file){
-        std::cout << std::filesystem::current_path().string() << '\n';
+        std::cout << std::filesystem::current_path().string() << std::endl;
       }else{
         std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-        file << std::filesystem::current_path().string() << '\n';
+        file << std::filesystem::current_path().string() << std::endl;
         file.close();
       }
       
@@ -352,7 +352,7 @@ int main() {
         }
       }
       for(int i = limit; i<history_list.size(); i++){
-        std::cout << i+1 << "  " << history_list[i] << '\n';
+        std::cout << i+1 << "  " << history_list[i] << std::endl;
       }
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
@@ -388,7 +388,7 @@ int main() {
             file.close(); 
           }
         }catch(std::filesystem::filesystem_error err){
-          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
+          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << std::endl;
           if(err_to_file){
             std::cerr.rdbuf(orig_err_buff);
             file.close(); 
@@ -422,10 +422,10 @@ int main() {
             }else{
               if(err_to_file){
                 std::ofstream file(err_file, ((err_append)? std::ios::app : std::ios::trunc));
-                file << command_name << ": command not found" << '\n';
+                file << command_name << ": command not found" << std::endl;
                 file.close();
               }else{
-                std::cerr << command_name << ": command not found" << '\n';
+                std::cerr << command_name << ": command not found" << std::endl;
               }
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}

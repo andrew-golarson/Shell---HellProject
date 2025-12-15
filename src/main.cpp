@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
+#include "linenoise.hpp"
 
 std::vector<std::filesystem::path> pathDirectories();
 

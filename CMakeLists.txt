@@ -1,21 +1,21 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 project(shell-starter-cpp)
 
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
-
-set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
+set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
-
 FetchContent_Declare(
-  replxx
-  GIT_REPOSITORY https://github.com/AmokHuginnsson/replxx.git
-  GIT_TAG        master
+    linenoise
+    GIT_REPOSITORY https://github.com/yhirose/cpp-linenoise.git
+    GIT_TAG        master
 )
+FetchContent_MakeAvailable(linenoise)
 
-FetchContent_MakeAvailable(replxx)
+file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 add_executable(shell ${SOURCE_FILES})
 
-target_link_libraries(shell PRIVATE replxx)
+target_link_libraries(shell PRIVATE linenoise)
+
+target_include_directories(shell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

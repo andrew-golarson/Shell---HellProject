@@ -5,8 +5,6 @@
 #include <sstream>
 #include <algorithm>
 #include <fstream>
-#include <cctype>
-#include "linenoise.hpp"
 
 std::vector<std::filesystem::path> pathDirectories();
 
@@ -53,7 +51,7 @@ void executeCommand(const std::string& whole_command) {
         &si,                    // Pointer to STARTUPINFO structure
         &pi)                    // Pointer to PROCESS_INFORMATION structure
     ) {
-        std::cerr << "Process Failed: " << GetLastError() << std::endl;
+        std::cerr << "Process Failed: " << GetLastError() << '\n';
         return;
     }
 
@@ -135,10 +133,10 @@ void executeCommand(const std::vector<std::string>& arguments,
 
         execvp(char_arguments[0], char_arguments.data());
 
-        std::cerr << arguments[0] << ": execution failed" << std::endl;
+        std::cerr << arguments[0] << ": execution failed" << '\n';
         exit(1);
     } else if(p < 0){
-        std::cerr << "Fork failed" << std::endl;
+        std::cerr << "Fork failed" << '\n';
     } else {
         int status;
         waitpid(p, &status, 0);
@@ -168,7 +166,7 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
     std::string part_command;
     std::vector<std::string> arguments;
     bool inside_quotes = false;
-    char quote_char = 0; 
+    char quote_char = 0; // Tracks if we are in ' or "
     
     for(char c : whole_command){
       if((c == '\'' || c == '"') && (!inside_quotes || quote_char == c)){
@@ -180,8 +178,7 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
         }
         continue; 
       }
-      
-      if(std::isspace(static_cast<unsigned char>(c)) && !inside_quotes){
+      if(c == ' ' && !inside_quotes){
         if(!part_command.empty()){
           arguments.push_back(part_command);
           part_command = "";
@@ -190,35 +187,30 @@ std::vector<std::string> splitCommand(const std::string& whole_command){
       else{
         part_command += c;
       }
-    }
-    if(!part_command.empty()) {
-      arguments.push_back(part_command);
-    }
-    return arguments;
-}
+  }
+  if(!part_command.empty()) {
+    arguments.push_back(part_command);
+  }
+  return arguments;
+} 
 
 
 int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd", "history"};
   std::vector<std::string> history_list{};
-  const auto path = "history.txt";
-  linenoise::SetMultiLine(true);
-  linenoise::LoadHistory(path);
-  linenoise::SetHistoryMaxLen(100);
-  
   while(true){
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
+    std::cout << "$ ";
+
     std::string command{};
-    auto success = linenoise::Readline("$ ", command);
-    if(!success) break;
-    
-    linenoise::AddHistory(command.c_str());
-    linenoise::SaveHistory(path);
+    std::getline(std::cin, command);
+    if(command.empty()) continue;
     history_list.push_back(command);    
 
     std::vector<std::string> parsed_args = splitCommand(command);
     if(parsed_args.empty()){
+      std::cerr << "No arguments" << '\n'; 
       continue;
     }
     std::string command_name = parsed_args[0];
@@ -284,10 +276,10 @@ int main() {
       
       if(std::find(builtin.begin(), builtin.end(), typed_command) != builtin.end()){
         if(!std_to_file){
-          std::cout << typed_command << " is a shell builtin" << std::endl;
+          std::cout << typed_command << " is a shell builtin" << '\n';
         }else{
           std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-          file << typed_command << " is a shell builtin" << std::endl;
+          file << typed_command << " is a shell builtin" << '\n';
           file.close();
         }
         continue;
@@ -296,14 +288,14 @@ int main() {
             std::filesystem::path executable = findExecutable(typed_command);
             if(executable != ""){
               if(!std_to_file){
-                std::cout << typed_command << " is " << executable.string() << std::endl;
+                std::cout << typed_command << " is " << executable.string() << '\n';
               }else{              
                 std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-                file << typed_command << " is " << executable.string() << std::endl;
+                file << typed_command << " is " << executable.string() << '\n';
                 file.close();
               }
             }else{
-              std::cerr << typed_command << ": not found" << std::endl;
+              std::cerr << typed_command << ": not found" << '\n';
             }
           }catch(std::filesystem::__cxx11::filesystem_error err){}
       }
@@ -317,10 +309,10 @@ int main() {
       }
 
       if(!std_to_file){
-        std::cout << message << std::endl; 
+        std::cout << message << '\n'; 
       }else{
         std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-        file << message << std::endl;
+        file << message << '\n';
         file.close();
       }
       if(err_to_file){
@@ -333,10 +325,10 @@ int main() {
 
     }else if(command_name == "pwd"){
       if(!std_to_file){
-        std::cout << std::filesystem::current_path().string() << std::endl;
+        std::cout << std::filesystem::current_path().string() << '\n';
       }else{
         std::ofstream file(std_file, ((std_append) ? std::ios::app : std::ios::trunc));
-        file << std::filesystem::current_path().string() << std::endl;
+        file << std::filesystem::current_path().string() << '\n';
         file.close();
       }
       
@@ -354,7 +346,7 @@ int main() {
         }
       }
       for(int i = limit; i<history_list.size(); i++){
-        std::cout << i+1 << "  " << history_list[i] << std::endl;
+        std::cout << i+1 << "  " << history_list[i] << '\n';
       }
     }else if(command_name == "cd"){
       std::filesystem::path cd_path;
@@ -390,7 +382,7 @@ int main() {
             file.close(); 
           }
         }catch(std::filesystem::filesystem_error err){
-          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << std::endl;
+          std::cerr << "cd: " << cd_path.string() << ": No such file or directory" << '\n';
           if(err_to_file){
             std::cerr.rdbuf(orig_err_buff);
             file.close(); 
@@ -424,10 +416,10 @@ int main() {
             }else{
               if(err_to_file){
                 std::ofstream file(err_file, ((err_append)? std::ios::app : std::ios::trunc));
-                file << command_name << ": command not found" << std::endl;
+                file << command_name << ": command not found" << '\n';
                 file.close();
               }else{
-                std::cerr << command_name << ": command not found" << std::endl;
+                std::cerr << command_name << ": command not found" << '\n';
               }
           }
         }catch(std::filesystem::__cxx11::filesystem_error err){}

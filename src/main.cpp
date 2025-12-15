@@ -204,7 +204,7 @@ int main() {
   linenoise::SetHistoryMaxLen(100);
   while(true){
     std::string command{};
-    linenoise::Readline("$> ", command);
+    linenoise::Readline("$ ", command);
     if(command.empty()) continue;
     linenoise::AddHistory(command.c_str());
     linenoise::SaveHistory(path);

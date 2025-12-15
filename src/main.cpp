@@ -200,8 +200,10 @@ int main() {
   const std::vector<std::string> builtin{"echo", "type", "exit", "pwd", "cd", "history"};
   std::vector<std::string> history_list{};
   const auto path = "history.txt";
+  linenoise::SetMultiLine(true);
   linenoise::LoadHistory(path);
   linenoise::SetHistoryMaxLen(100);
+  
   while(true){
     std::string command{};
     linenoise::Readline("$ ", command);
@@ -212,7 +214,6 @@ int main() {
 
     std::vector<std::string> parsed_args = splitCommand(command);
     if(parsed_args.empty()){
-      std::cerr << "No arguments" << '\n'; 
       continue;
     }
     std::string command_name = parsed_args[0];

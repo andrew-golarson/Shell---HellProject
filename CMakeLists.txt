@@ -8,4 +8,4 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 add_executable(shell ${SOURCE_FILES})
 
-target_include_directories(shell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(shell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
